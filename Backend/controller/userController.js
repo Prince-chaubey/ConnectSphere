@@ -43,6 +43,7 @@ const registerUser = async (req, res) => {
         email: user.email,
         role: user.role,
         profilePic: user.profilePic,
+        resume: user.resume,
       },
     });
   } catch (error) {
@@ -94,6 +95,7 @@ const loginUser = async (req, res) => {
         email: user.email,
         role: user.role,
         profilePic: user.profilePic,
+        resume: user.resume,
       },
     });
   } catch (error) {

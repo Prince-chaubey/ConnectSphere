@@ -43,6 +43,11 @@ const userSchema = new mongoose.Schema(
     },
 
     // ==================== PROFILE ====================
+    resume: {
+      type: String,
+      default: ""
+    },
+
     bio: {
       type: String,
       default: ""
@@ -156,3 +161,4 @@ userSchema.methods.checkProfileComplete = function () {
 };
 
 module.exports = mongoose.model("User", userSchema);
+

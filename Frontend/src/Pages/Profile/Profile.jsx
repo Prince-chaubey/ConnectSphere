@@ -24,6 +24,8 @@ import {
   Star,
   Loader2,
   Activity,
+  Upload,
+  Download,
 } from "lucide-react";
 
 const Profile = () => {
@@ -33,6 +35,8 @@ const Profile = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [fetchingLocation, setFetchingLocation] = useState(false);
+  const [isUploadingResume, setIsUploadingResume] = useState(false);
+  const [resumeFile, setResumeFile] = useState(null);
   const [user, setUser] = useState({
     name: "",
     role: "user",
@@ -41,6 +45,7 @@ const Profile = () => {
     location: "",
     joined: "",
     bio: "",
+    resume: "",
     skills: [],
     stats: {
       applications: 0,
@@ -58,7 +63,7 @@ const Profile = () => {
     hourlyRate: 0,
   });
 
-  const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+  const API_URL = import.meta.env.VITE_API_URL;
   const BASE_URL = API_URL.replace("/api", "");
 
   const getToken = () => {
@@ -255,6 +260,49 @@ const Profile = () => {
   const handleKeyPress = (e) => {
     if (e.key === "Enter") {
       handleAddSkill();
+    }
+  };
+
+  const updateResumeFile = async (file) => {
+    try {
+      setIsUploadingResume(true);
+      const token = getToken();
+      const formData = new FormData();
+      formData.append("resume", file);
+
+      const response = await axios.put(
+        `${API_URL}/user/profile/resume`,
+        formData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "multipart/form-data",
+          },
+        },
+      );
+
+      if (response.data.success) {
+        setUser({
+          ...user,
+          resume: response.data.user.resume,
+        });
+        localStorage.setItem("user", JSON.stringify(response.data.user));
+        toast.success("Resume uploaded successfully!");
+      }
+    } catch (error) {
+      console.error("Error updating resume:", error);
+      toast.error(error.response?.data?.message || "Failed to upload resume.");
+      setResumeFile(null);
+    } finally {
+      setIsUploadingResume(false);
+    }
+  };
+
+  const handleResumeChange = async (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setResumeFile(file);
+      await updateResumeFile(file);
     }
   };
 
@@ -685,6 +733,70 @@ const Profile = () => {
                       </div>
                     )}
                   </div>
+                </div>
+              </div>
+
+              {/* Resume Widget */}
+              <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-6 sm:p-8 transition-all duration-300 hover:shadow-md">
+                <div className="flex items-center justify-between mb-6">
+                  <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                    <FileText className="w-5 h-5 text-red-500" /> Resume / CV
+                  </h3>
+                </div>
+
+                <div className="border-2 border-dashed border-gray-200 rounded-2xl p-6 md:p-8 text-center bg-gray-50/50 hover:bg-gray-50 transition-colors">
+                  {resumeFile || user.resume ? (
+                    <div className="flex flex-col items-center justify-center py-4">
+                      <div className="bg-white p-4 sm:p-5 rounded-2xl border border-gray-100 shadow-sm w-full max-w-md text-left">
+                        <div className="flex items-center gap-4">
+                          <div className="w-12 h-12 bg-red-50 rounded-xl flex items-center justify-center text-red-500 shrink-0">
+                            {isUploadingResume ? <Loader2 className="w-6 h-6 animate-spin" /> : <FileText className="w-6 h-6" />}
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <p className="font-semibold text-gray-900 truncate">
+                              {resumeFile ? resumeFile.name : (user.resume ? "My_Resume.pdf" : "")}
+                            </p>
+                            <p className="text-xs text-gray-500">
+                              {isUploadingResume ? "Uploading..." : "Ready to view"}
+                            </p>
+                          </div>
+                        </div>
+                        
+                        <div className="flex gap-3 mt-4 pt-4 border-t border-gray-100">
+                          <button 
+                            className="py-2 flex-1 text-blue-600 hover:bg-blue-50 bg-blue-50/50 border border-blue-100 rounded-xl transition-colors flex items-center justify-center gap-1.5 text-sm font-semibold shadow-sm"
+                            onClick={() => window.open(user.resume, '_blank')}
+                          >
+                            <Download className="w-4 h-4" /> Download
+                          </button>
+                          
+                          <label className={`py-2 flex-1 text-gray-600 hover:bg-gray-50 bg-white border border-gray-200 rounded-xl transition-colors flex items-center justify-center gap-1.5 text-sm font-semibold shadow-sm cursor-pointer ${isUploadingResume ? 'opacity-50 pointer-events-none' : ''}`}>
+                            <Upload className="w-4 h-4" /> Replace
+                            <input type="file" className="hidden" accept=".pdf,.doc,.docx" onChange={handleResumeChange} disabled={isUploadingResume} />
+                          </label>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center gap-3 py-4">
+                      <div className="w-16 h-16 bg-red-100 text-red-500 rounded-full flex items-center justify-center mb-2 shadow-sm">
+                        <Upload className="w-8 h-8" />
+                      </div>
+                      <h4 className="text-gray-700 font-semibold text-lg">Upload your resume</h4>
+                      <p className="text-sm text-gray-500 max-w-sm mb-4">Supported formats: PDF, DOCX. Max size: 5MB.</p>
+                      
+                      <label className={`cursor-pointer bg-gradient-to-r from-red-500 to-rose-600 text-white hover:from-red-600 hover:to-rose-700 px-8 py-3 rounded-xl font-semibold transition-all shadow-md shadow-red-500/20 inline-flex flex-col items-center ${isUploadingResume ? 'opacity-50 pointer-events-none' : 'hover:-translate-y-0.5 active:translate-y-0'}`}>
+                        <span className="flex items-center gap-2">
+                          {isUploadingResume ? (
+                            <><Loader2 className="w-5 h-5 animate-spin" /> Uploading...</>
+                          ) : (
+                            <><Upload className="w-5 h-5" /> Browse Files</>
+                          )}
+                        </span>
+                        <input type="file" className="hidden" accept=".pdf,.doc,.docx" onChange={handleResumeChange} disabled={isUploadingResume} />
+                      </label>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

@@ -2,6 +2,7 @@ const express = require("express");
 const profileRouter = express.Router();
 const auth = require("../middleware/auth");
 const upload = require("../middleware/upload");
+const resumeUpload = require("../middleware/resumeUpload");
 
 const {
   getProfile,
@@ -9,7 +10,8 @@ const {
   updateProfilePicture,
   updateCoverPicture,
   updateStats,
-  updateRating
+  updateRating,
+  updateResume
 } = require("../controller/profileController");
 
 
@@ -24,6 +26,13 @@ profileRouter.put(
   auth,
   upload.single("profilePic"),
   updateProfilePicture
+);
+
+profileRouter.put(
+  "/profile/resume",
+  auth,
+  resumeUpload.single("resume"),
+  updateResume
 );
 
 profileRouter.put("/profile/cover", updateCoverPicture);

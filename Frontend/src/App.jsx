@@ -7,6 +7,7 @@ import Login from "./Pages/Login/Login";
 import Profile from "./Pages/Profile/Profile";
 import ProtectedRoute from "./Pages/ProtectedRoute/ProtectedRoute";
 
+
 const App = () => {
   return (
     <BrowserRouter>

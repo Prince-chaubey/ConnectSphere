@@ -22,6 +22,7 @@ const getProfile = async (req, res) => {
         role: user.role,
         profilePic: user.profilePic,
         coverPic: user.coverPic,
+        resume: user.resume,
         location: user.location,
         joined: user.joined,
         bio: user.bio,
@@ -104,6 +105,7 @@ const updateProfile = async (req, res) => {
         role: user.role,
         profilePic: user.profilePic,
         coverPic: user.coverPic,
+        resume: user.resume,
         location: user.location,
         joined: user.joined,
         bio: user.bio,
@@ -132,7 +134,7 @@ const updateProfilePicture = async (req, res) => {
     if (!req.file) {
       return res.status(400).json({
         success: false,
-        message: "No file uploaded"
+        message: "No file uploaded"     
       });
     }
 
@@ -152,6 +154,39 @@ const updateProfilePicture = async (req, res) => {
 
   } catch (error) {
     console.error("Update profile picture error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server error"
+    });
+  }
+};
+
+const updateResume = async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({
+        success: false,
+        message: "No file uploaded or invalid file format"
+      });
+    }
+
+    // multer-storage-cloudinary attaches the remote url in 'path'
+    const resumeUrl = req.file.path;
+
+    const user = await User.findByIdAndUpdate(
+      req.userId,
+      { resume: resumeUrl },
+      { new: true }
+    ).select("-password");
+
+    res.json({
+      success: true,
+      message: "Resume uploaded successfully",
+      user
+    });
+
+  } catch (error) {
+    console.error("Update resume error:", error);
     res.status(500).json({
       success: false,
       message: "Server error"
@@ -291,5 +326,6 @@ module.exports = {
   updateProfilePicture,
   updateCoverPicture,
   updateStats,
-  updateRating
+  updateRating,
+  updateResume
 };

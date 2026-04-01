@@ -21,7 +21,7 @@ const Hero = () => {
             <span className="text-sm font-bold text-blue-900 tracking-wide uppercase">The Future of Collaboration</span>
           </div>
           
-          <h1 className="text-5xl sm:text-6xl lg:text-7xl font-extrabold text-slate-900 leading-[1.12] mb-6 tracking-tight">
+          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-slate-900 leading-[1.12] mb-6 tracking-tight">
             Build Teams. <br className="hidden sm:block" />
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600">
               Join Projects.
