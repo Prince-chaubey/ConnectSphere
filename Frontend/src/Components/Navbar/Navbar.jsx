@@ -65,10 +65,7 @@ const Navbar = () => {
     ];
 
     if (!isLoggedIn) {
-      return [
-        ...commonItems,
-        { path: "/opportunities", label: "Opportunities" }
-      ];
+      return commonItems;
     }
 
     switch (userRole) {
@@ -76,17 +73,21 @@ const Navbar = () => {
       case "seeker": 
         return [
           ...commonItems,
-          { path: "/find-work", label: "Find Work" },
           { path: "/my-applications", label: "My Applications" },
-          { path: "/opportunities", label: "Opportunities" }
         ];
 
       case "creator":
         return [
           ...commonItems,
-          { path: "/my-projects", label: "My Projects" },
           { path: "/create-project", label: "Post Project" },
-          { path: "/review-applications", label: "Review Applications" }
+          { path: "/admin-dashboard", label: "Dashboard" },
+        ];
+
+      case "admin":
+        return [
+          ...commonItems,
+          { path: "/create-project", label: "Post Project" },
+          { path: "/admin-dashboard", label: "Admin Panel" },
         ];
 
       default:
@@ -173,9 +174,16 @@ const Navbar = () => {
                      <Link to="/profile" className="flex items-center gap-3 px-3 py-2 text-sm font-medium text-slate-700 rounded-xl hover:bg-slate-50 hover:text-blue-600 transition-colors">
                         <User className="w-4 h-4 text-slate-400" /> My Profile
                      </Link>
-                     <Link to="/dashboard" className="flex items-center gap-3 px-3 py-2 text-sm font-medium text-slate-700 rounded-xl hover:bg-slate-50 hover:text-blue-600 transition-colors">
-                        <LayoutDashboard className="w-4 h-4 text-slate-400" /> Dashboard
-                     </Link>
+                     {(userRole === "creator" || userRole === "admin") && (
+                        <Link to="/admin-dashboard" className="flex items-center gap-3 px-3 py-2 text-sm font-medium text-slate-700 rounded-xl hover:bg-slate-50 hover:text-blue-600 transition-colors">
+                           <LayoutDashboard className="w-4 h-4 text-slate-400" /> {userRole === "admin" ? "Admin Panel" : "Dashboard"}
+                        </Link>
+                     )}
+                     {userRole === "user" && (
+                       <Link to="/my-applications" className="flex items-center gap-3 px-3 py-2 text-sm font-medium text-slate-700 rounded-xl hover:bg-slate-50 hover:text-blue-600 transition-colors">
+                          <LayoutDashboard className="w-4 h-4 text-slate-400" /> My Applications
+                       </Link>
+                     )}
                      
                      <div className="h-px bg-slate-100 my-2 mx-2"></div>
                      

@@ -5,12 +5,13 @@ const app=express();
 const cors=require("cors");
 const userRouter = require("./routes/userRoute");
 const profileRouter = require("./routes/profileRoute");
+const projectRouter = require("./routes/projectRoute");
 
 
 
 app.use(express.urlencoded({extended:true}));
 app.use(express.json());
-app.use(cors());
+app.use(cors({ origin: "*", credentials: true }));
 app.use("/uploads", express.static("uploads"));
 
 
@@ -23,6 +24,7 @@ connectDB();
 
 app.use('/api/auth',userRouter);
 app.use("/api/user",profileRouter);
+app.use("/api/projects", projectRouter);
 const PORT=process.env.PORT || 8080;
 
 app.listen(PORT,()=>{

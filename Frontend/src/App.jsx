@@ -6,24 +6,29 @@ import { Toaster } from "react-hot-toast";
 import Login from "./Pages/Login/Login";
 import Profile from "./Pages/Profile/Profile";
 import ProtectedRoute from "./Pages/ProtectedRoute/ProtectedRoute";
+import Explore from "./Pages/Explore/Explore";
+import ProjectDetail from "./Pages/ProjectDetail/ProjectDetail";
+import CreateProject from "./Pages/CreateProject/CreateProject";
+import MyApplications from "./Pages/MyApplications/MyApplications";
+import AdminDashboard from "./Pages/AdminDashboard/AdminDashboard";
 
 
 const App = () => {
   return (
     <BrowserRouter>
-      <Toaster />
+      <Toaster position="top-right" />
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/register" element={<Register />} />
         <Route path="/login" element={<Login />} />
-        <Route
-          path="/profile"
-          element={
-            <ProtectedRoute>
-              <Profile />
-            </ProtectedRoute>
-          }
-        />
+        <Route path="/explore" element={<Explore />} />
+        <Route path="/projects/:id" element={<ProjectDetail />} />
+
+        {/* Protected routes */}
+        <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+        <Route path="/create-project" element={<ProtectedRoute><CreateProject /></ProtectedRoute>} />
+        <Route path="/my-applications" element={<ProtectedRoute><MyApplications /></ProtectedRoute>} />
+        <Route path="/admin-dashboard" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
       </Routes>
     </BrowserRouter>
   );
