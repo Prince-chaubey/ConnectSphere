@@ -110,7 +110,7 @@ const Navbar = () => {
               Connect
             </span>
             <span className="bg-gradient-to-br from-purple-600 to-pink-500 bg-clip-text text-transparent">
-              In
+              Sphere
             </span>
           </h1>
         </Link>

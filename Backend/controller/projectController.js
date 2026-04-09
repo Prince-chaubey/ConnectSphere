@@ -4,6 +4,7 @@ const User = require("../models/userModel");
 const {
   sendApplicationConfirmation,
   sendCreatorNotification,
+  sendApplicationStatusEmail,
 } = require("../utils/emailer");
 
 // ─── Create Project (Creator only) ────────────────────────────────────────────
@@ -283,10 +284,9 @@ const updateApplicationStatus = async (req, res) => {
         .json({ success: false, message: "Invalid status" });
     }
 
-    const application = await Application.findById(applicationId).populate(
-      "project",
-      "createdBy"
-    );
+    const application = await Application.findById(applicationId)
+      .populate("project", "title createdBy")
+      .populate("applicant", "name email");
 
     if (!application) {
       return res
@@ -303,6 +303,19 @@ const updateApplicationStatus = async (req, res) => {
 
     application.status = status;
     await application.save();
+
+    // Send email notification for accepted/rejected status
+    if (status === "accepted" || status === "rejected") {
+      if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
+        sendApplicationStatusEmail({
+          toEmail: application.applicant.email,
+          applicantName: application.applicant.name,
+          projectTitle: application.project.title,
+          roleName: application.roleName,
+          status,
+        });
+      }
+    }
 
     res.json({
       success: true,

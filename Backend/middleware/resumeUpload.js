@@ -14,7 +14,7 @@ const storage = new CloudinaryStorage({
   params: async (req, file) => {
     // Cloudinary treats PDFs and DOC/DOCX as raw files
     return {
-      folder: "connectin_resumes",
+      folder: "connectsphere_resumes",
       resource_type: "raw", 
       public_id: `${Date.now()}-${file.originalname}`,
     };

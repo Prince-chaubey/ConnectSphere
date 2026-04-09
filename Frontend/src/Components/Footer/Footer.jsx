@@ -22,7 +22,7 @@ const Footer = () => {
                  <span className="bg-gradient-to-r from-blue-400 to-indigo-400 bg-clip-text text-transparent">
                    Connect
                  </span><span className="bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent ml-1">
-                   In
+                   Sphere
                  </span>
                </h2>
             </Link>
@@ -80,9 +80,9 @@ const Footer = () => {
               <li><Link to="#" className="text-slate-400 hover:text-blue-400 transition-colors">Terms of Service</Link></li>
             </ul>
             
-            <a href="mailto:hello@connectin.com" className="inline-flex items-center gap-2 mt-6 text-sm font-bold text-blue-400 hover:text-blue-300 transition-colors group">
+            <a href="mailto:hello@connectsphere.com" className="inline-flex items-center gap-2 mt-6 text-sm font-bold text-blue-400 hover:text-blue-300 transition-colors group">
               <Mail className="w-4 h-4" /> 
-              <span>hello@connectin.com</span>
+              <span>hello@connectsphere.com</span>
             </a>
           </div>
 
@@ -91,7 +91,7 @@ const Footer = () => {
         {/* Bottom Divider / Copyright */}
         <div className="border-t border-slate-800 pt-8 flex flex-col md:flex-row justify-between items-center gap-4 text-sm font-medium">
           <p className="text-slate-500">
-            © {new Date().getFullYear()} ConnectIn Inc. All rights reserved.
+            © {new Date().getFullYear()} ConnectSphere Inc. All rights reserved.
           </p>
 
           <div className="flex items-center gap-1.5 text-slate-500 bg-slate-800/50 px-4 py-2 rounded-full border border-slate-700/50">

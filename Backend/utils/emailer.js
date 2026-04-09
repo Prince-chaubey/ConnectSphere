@@ -6,7 +6,7 @@ let _transporter = null;
 const getTransporter = () => {
   if (!_transporter) {
     if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
-      console.error("❌ EMAIL_USER or EMAIL_PASS is missing from .env");
+      console.error("EMAIL_USER or EMAIL_PASS is missing from .env");
       return null;
     }
     _transporter = nodemailer.createTransport({
@@ -16,7 +16,7 @@ const getTransporter = () => {
         pass: process.env.EMAIL_PASS.replace(/\s+/g, ""), // strip ALL spaces automatically
       },
     });
-    console.log(`✅ Email transporter created for: ${process.env.EMAIL_USER}`);
+    //console.log(`Email transporter created for: ${process.env.EMAIL_USER}`);
   }
   return _transporter;
 };
@@ -40,9 +40,9 @@ const sendApplicationConfirmation = async ({
   }[projectType] || projectType;
 
   const mailOptions = {
-    from: `"ConnectIn" <${process.env.EMAIL_USER}>`,
+    from: `"ConnectSphere" <${process.env.EMAIL_USER}>`,
     to: toEmail,
-    subject: `✅ Application Submitted – ${projectTitle}`,
+    subject: `Application Submitted – ${projectTitle}`,
     html: `
       <!DOCTYPE html>
       <html>
@@ -55,7 +55,7 @@ const sendApplicationConfirmation = async ({
           
           <!-- Header -->
           <div style="background:linear-gradient(135deg,#2563eb,#7c3aed);padding:36px 32px;text-align:center;">
-            <h1 style="margin:0;color:#ffffff;font-size:26px;font-weight:800;letter-spacing:-0.5px;">ConnectIn</h1>
+            <h1 style="margin:0;color:#ffffff;font-size:26px;font-weight:800;letter-spacing:-0.5px;">ConnectSphere</h1>
             <p style="margin:8px 0 0;color:rgba(255,255,255,0.8);font-size:14px;">Student Collaboration Platform</p>
           </div>
 
@@ -114,8 +114,8 @@ const sendApplicationConfirmation = async ({
           <!-- Footer -->
           <div style="background:#f8fafc;border-top:1px solid #e2e8f0;padding:20px 32px;text-align:center;">
             <p style="margin:0;color:#94a3b8;font-size:12px;">
-              © 2026 ConnectIn. All rights reserved.<br/>
-              <span style="font-size:11px;">You received this email because you applied to a project on ConnectIn.</span>
+              © 2026 ConnectSphere. All rights reserved.<br/>
+              <span style="font-size:11px;">You received this email because you applied to a project on ConnectSphere.</span>
             </p>
           </div>
         </div>
@@ -127,14 +127,14 @@ const sendApplicationConfirmation = async ({
   try {
     const transport = getTransporter();
     if (!transport) {
-      console.error("❌ Cannot send email — transporter not initialized (check EMAIL_USER/EMAIL_PASS in .env)");
+      console.error("Cannot send email — transporter not initialized (check EMAIL_USER/EMAIL_PASS in .env)");
       return;
     }
     await transport.sendMail(mailOptions);
-    console.log(`✅ Confirmation email sent to ${toEmail}`);
+   // console.log(`Confirmation email sent to ${toEmail}`);
   } catch (err) {
-    console.error("❌ Error sending confirmation email:", err.message);
-    console.error("   Full error:", err);
+    console.error("Error sending confirmation email:", err.message);
+    console.error("Full error:", err);
   }
 };
 
@@ -149,7 +149,7 @@ const sendCreatorNotification = async ({
   roleName,
 }) => {
   const mailOptions = {
-    from: `"ConnectIn" <${process.env.EMAIL_USER}>`,
+    from: `"ConnectSphere" <${process.env.EMAIL_USER}>`,
     to: toEmail,
     subject: `🔔 New Application – ${projectTitle}`,
     html: `
@@ -159,7 +159,7 @@ const sendCreatorNotification = async ({
         <div style="max-width:580px;margin:40px auto;background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.07);">
           
           <div style="background:linear-gradient(135deg,#2563eb,#7c3aed);padding:36px 32px;text-align:center;">
-            <h1 style="margin:0;color:#ffffff;font-size:26px;font-weight:800;">ConnectIn</h1>
+            <h1 style="margin:0;color:#ffffff;font-size:26px;font-weight:800;">ConnectSphere</h1>
             <p style="margin:8px 0 0;color:rgba(255,255,255,0.8);font-size:14px;">Project Dashboard Alert</p>
           </div>
 
@@ -195,7 +195,7 @@ const sendCreatorNotification = async ({
           </div>
 
           <div style="background:#f8fafc;border-top:1px solid #e2e8f0;padding:20px 32px;text-align:center;">
-            <p style="margin:0;color:#94a3b8;font-size:12px;">© 2026 ConnectIn. All rights reserved.</p>
+            <p style="margin:0;color:#94a3b8;font-size:12px;">© 2026 ConnectSphere. All rights reserved.</p>
           </div>
         </div>
       </body>
@@ -206,15 +206,112 @@ const sendCreatorNotification = async ({
   try {
     const transport = getTransporter();
     if (!transport) {
-      console.error("❌ Cannot send email — transporter not initialized (check EMAIL_USER/EMAIL_PASS in .env)");
+      console.error("Cannot send email,transporter not initialized");
       return;
     }
     await transport.sendMail(mailOptions);
-    console.log(`✅ Creator notification sent to ${toEmail}`);
+   // console.log(`Creator notification sent to ${toEmail}`);
   } catch (err) {
-    console.error("❌ Error sending creator notification:", err.message);
-    console.error("   Full error:", err);
+    console.error("Error sending creator notification:", err.message);
+    console.error("Full error:", err);
   }
 };
 
-module.exports = { sendApplicationConfirmation, sendCreatorNotification };
+/**
+ * Send application status update email to the applicant (Accepted/Rejected)
+ */
+const sendApplicationStatusEmail = async ({
+  toEmail,
+  applicantName,
+  projectTitle,
+  roleName,
+  status,
+}) => {
+  const isAccepted = status === "accepted";
+  const subject = isAccepted
+    ? `🎉 Application Accepted! – ${projectTitle}`
+    : `Application Update – ${projectTitle}`;
+  const headerColor = isAccepted ? "linear-gradient(135deg,#10b981,#059669)" : "linear-gradient(135deg,#ef4444,#dc2626)";
+  const statusColor = isAccepted ? "#10b981" : "#ef4444";
+  
+  const mailOptions = {
+    from: `"ConnectSphere" <${process.env.EMAIL_USER}>`,
+    to: toEmail,
+    subject,
+    html: `
+      <!DOCTYPE html>
+      <html>
+      <body style="margin:0;padding:0;background:#f8fafc;font-family:'Segoe UI',Arial,sans-serif;">
+        <div style="max-width:580px;margin:40px auto;background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.07);">
+          
+          <div style="background:${headerColor};padding:36px 32px;text-align:center;">
+            <h1 style="margin:0;color:#ffffff;font-size:26px;font-weight:800;">ConnectSphere</h1>
+            <p style="margin:8px 0 0;color:rgba(255,255,255,0.9);font-size:14px;">Application Status Update</p>
+          </div>
+
+          <div style="padding:36px 32px;">
+            <h2 style="margin:0 0 8px;color:#0f172a;font-size:20px;font-weight:700;">Hi ${applicantName},</h2>
+            <p style="margin:0 0 24px;color:#64748b;font-size:15px;line-height:1.6;">
+              ${isAccepted 
+                ? `Great news! The project creator has <strong>accepted</strong> your application for <strong>${projectTitle}</strong>.` 
+                : `Thank you for applying to <strong>${projectTitle}</strong>. Unfortunately, the creator has decided to move forward with other candidates for this specific role.`}
+            </p>
+
+            <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:20px 24px;margin-bottom:24px;">
+              <table style="width:100%;border-collapse:collapse;">
+                <tr>
+                  <td style="padding:8px 0;color:#94a3b8;font-size:13px;font-weight:600;text-transform:uppercase;width:130px;">Project</td>
+                  <td style="padding:8px 0;color:#0f172a;font-size:14px;font-weight:700;">${projectTitle}</td>
+                </tr>
+                <tr>
+                  <td style="padding:8px 0;color:#94a3b8;font-size:13px;font-weight:600;text-transform:uppercase;">Role</td>
+                  <td style="padding:8px 0;color:#0f172a;font-size:14px;font-weight:700;">${roleName}</td>
+                </tr>
+                <tr>
+                  <td style="padding:8px 0;color:#94a3b8;font-size:13px;font-weight:600;text-transform:uppercase;">Status</td>
+                  <td style="padding:8px 0;">
+                     <span style="color:${statusColor};font-size:14px;font-weight:800;text-transform:capitalize;">${status}</span>
+                  </td>
+                </tr>
+              </table>
+            </div>
+
+            ${isAccepted ? `
+            <p style="margin:0 0 28px;color:#64748b;font-size:14px;line-height:1.7;">
+              The project creator will be in touch with you shortly with the next steps. Congratulations on joining the team!
+            </p>` : `
+            <p style="margin:0 0 28px;color:#64748b;font-size:14px;line-height:1.7;">
+              Don't be discouraged! There are many other amazing projects looking for talent like yours on ConnectSphere.
+            </p>`}
+
+            <div style="text-align:center;">
+              <a href="${process.env.FRONTEND_URL || 'http://localhost:5173'}/explore"
+                 style="display:inline-block;background:linear-gradient(135deg,#2563eb,#7c3aed);color:#fff;text-decoration:none;padding:13px 32px;border-radius:50px;font-size:14px;font-weight:700;">
+                Explore More Projects →
+              </a>
+            </div>
+          </div>
+
+          <div style="background:#f8fafc;border-top:1px solid #e2e8f0;padding:20px 32px;text-align:center;">
+            <p style="margin:0;color:#94a3b8;font-size:12px;">© 2026 ConnectSphere. All rights reserved.</p>
+          </div>
+        </div>
+      </body>
+      </html>
+    `,
+  };
+
+  try {
+    const transport = getTransporter();
+    if (!transport) {
+      console.error("Cannot send email — transporter not initialized");
+      return;
+    }
+    await transport.sendMail(mailOptions);
+    //console.log(`Application ${status} email sent to ${toEmail}`);
+  } catch (err) {
+    console.error("Error sending application status email:", err.message);
+  }
+};
+
+module.exports = { sendApplicationConfirmation, sendCreatorNotification, sendApplicationStatusEmail };
