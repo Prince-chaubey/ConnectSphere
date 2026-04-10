@@ -129,24 +129,7 @@ const handleSubmit = async (e) => {
             </div>
           </div>
           
-          {/* Demo Credentials */}
-          <div className="mt-12 pt-8 border-t border-white/20">
-            <p className="text-sm text-blue-200 mb-3">Demo Credentials:</p>
-            <div className="grid grid-cols-2 gap-2 text-xs">
-              <div className="bg-white/10 rounded p-2">
-                <span className="font-semibold">Student:</span><br />
-                student@example.com / 123456
-              </div>
-              <div className="bg-white/10 rounded p-2">
-                <span className="font-semibold">Creator:</span><br />
-                creator@example.com / 123456
-              </div>
-              <div className="bg-white/10 rounded p-2 col-span-2">
-                <span className="font-semibold">Admin:</span><br />
-                admin@example.com / 123456
-              </div>
-            </div>
-          </div>
+
         </div>
       </div>
       
