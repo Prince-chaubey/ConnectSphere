@@ -6,6 +6,7 @@ const resumeUpload = require("../middleware/resumeUpload");
 
 const {
   getProfile,
+  getProfileById,
   updateProfile,
   updateProfilePicture,
   updateCoverPicture,
@@ -20,6 +21,7 @@ profileRouter.use(auth);
 
 // Profile routes
 profileRouter.get("/profile", getProfile);
+profileRouter.get("/profile/:id", getProfileById);
 profileRouter.put("/profile", updateProfile);
 profileRouter.put(
   "/profile/picture",

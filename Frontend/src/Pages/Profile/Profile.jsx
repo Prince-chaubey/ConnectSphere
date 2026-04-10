@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import Layout from "../../Components/Layout/Layout";
 import axios from "axios";
+import { useParams } from "react-router-dom";
 import toast from "react-hot-toast";
 import {
   Camera,
@@ -29,6 +30,10 @@ import {
 } from "lucide-react";
 
 const Profile = () => {
+  const { id } = useParams();
+  const currentUser = JSON.parse(localStorage.getItem("user") || "{}");
+  const isReadOnly = Boolean(id && id !== currentUser.id);
+
   const [profileImage, setProfileImage] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
   const [newSkill, setNewSkill] = useState("");
@@ -154,7 +159,7 @@ const Profile = () => {
 
   useEffect(() => {
     fetchUserProfile();
-  }, []);
+  }, [id]);
 
   const fetchUserProfile = async () => {
     try {
@@ -165,7 +170,8 @@ const Profile = () => {
         return;
       }
 
-      const response = await axios.get(`${API_URL}/user/profile`, {
+      const endpoint = id ? `${API_URL}/user/profile/${id}` : `${API_URL}/user/profile`;
+      const response = await axios.get(endpoint, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -406,13 +412,15 @@ const Profile = () => {
               {/* Avatar section */}
               <div className="relative flex flex-col sm:flex-row justify-between items-start sm:items-end -mt-16 sm:-mt-20 mb-4 gap-4">
                 <div className="relative group inline-block">
-                  <label className="cursor-pointer block relative">
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={handleImageChange}
-                      className="hidden"
-                    />
+                  <label className={`block relative ${isReadOnly ? '' : 'cursor-pointer'}`}>
+                    {!isReadOnly && (
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleImageChange}
+                        className="hidden"
+                      />
+                    )}
                     {userProfilePicSrc ? (
                       <img
                         src={userProfilePicSrc}
@@ -424,13 +432,16 @@ const Profile = () => {
                         {user.name?.charAt(0)?.toUpperCase() || "U"}
                       </div>
                     )}
-                    <div className="absolute inset-0 rounded-full bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-all duration-200 backdrop-blur-sm">
-                      <Camera className="w-8 h-8 sm:w-10 sm:h-10 text-white" />
-                    </div>
+                    {!isReadOnly && (
+                      <div className="absolute inset-0 rounded-full bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-all duration-200 backdrop-blur-sm">
+                        <Camera className="w-8 h-8 sm:w-10 sm:h-10 text-white" />
+                      </div>
+                    )}
                   </label>
                 </div>
 
-                <div className="flex gap-3 self-end w-full sm:w-auto">
+                {!isReadOnly && (
+                  <div className="flex gap-3 self-end w-full sm:w-auto">
                   <button
                     onClick={() =>
                       isEditing ? handleSaveProfile() : setIsEditing(true)
@@ -471,6 +482,7 @@ const Profile = () => {
                     </button>
                   )}
                 </div>
+                )}
               </div>
 
               {/* User Info Details */}
@@ -770,31 +782,44 @@ const Profile = () => {
                             <Download className="w-4 h-4" /> Download
                           </button>
                           
-                          <label className={`py-2 flex-1 text-gray-600 hover:bg-gray-50 bg-white border border-gray-200 rounded-xl transition-colors flex items-center justify-center gap-1.5 text-sm font-semibold shadow-sm cursor-pointer ${isUploadingResume ? 'opacity-50 pointer-events-none' : ''}`}>
-                            <Upload className="w-4 h-4" /> Replace
-                            <input type="file" className="hidden" accept=".pdf,.doc,.docx" onChange={handleResumeChange} disabled={isUploadingResume} />
-                          </label>
+                          {!isReadOnly && (
+                            <label className={`py-2 flex-1 text-gray-600 hover:bg-gray-50 bg-white border border-gray-200 rounded-xl transition-colors flex items-center justify-center gap-1.5 text-sm font-semibold shadow-sm cursor-pointer ${isUploadingResume ? 'opacity-50 pointer-events-none' : ''}`}>
+                              <Upload className="w-4 h-4" /> Replace
+                              <input type="file" className="hidden" accept=".pdf,.doc,.docx" onChange={handleResumeChange} disabled={isUploadingResume} />
+                            </label>
+                          )}
                         </div>
                       </div>
                     </div>
                   ) : (
                     <div className="flex flex-col items-center gap-3 py-4">
-                      <div className="w-16 h-16 bg-red-100 text-red-500 rounded-full flex items-center justify-center mb-2 shadow-sm">
-                        <Upload className="w-8 h-8" />
-                      </div>
-                      <h4 className="text-gray-700 font-semibold text-lg">Upload your resume</h4>
-                      <p className="text-sm text-gray-500 max-w-sm mb-4">Supported formats: PDF, DOCX. Max size: 5MB.</p>
-                      
-                      <label className={`cursor-pointer bg-gradient-to-r from-red-500 to-rose-600 text-white hover:from-red-600 hover:to-rose-700 px-8 py-3 rounded-xl font-semibold transition-all shadow-md shadow-red-500/20 inline-flex flex-col items-center ${isUploadingResume ? 'opacity-50 pointer-events-none' : 'hover:-translate-y-0.5 active:translate-y-0'}`}>
-                        <span className="flex items-center gap-2">
-                          {isUploadingResume ? (
-                            <><Loader2 className="w-5 h-5 animate-spin" /> Uploading...</>
-                          ) : (
-                            <><Upload className="w-5 h-5" /> Browse Files</>
-                          )}
-                        </span>
-                        <input type="file" className="hidden" accept=".pdf,.doc,.docx" onChange={handleResumeChange} disabled={isUploadingResume} />
-                      </label>
+                      {isReadOnly ? (
+                        <>
+                          <div className="w-16 h-16 bg-gray-100 text-gray-400 rounded-full flex items-center justify-center mb-2 shadow-sm">
+                            <FileText className="w-8 h-8" />
+                          </div>
+                          <h4 className="text-gray-700 font-semibold text-lg">No resume uploaded</h4>
+                        </>
+                      ) : (
+                        <>
+                          <div className="w-16 h-16 bg-red-100 text-red-500 rounded-full flex items-center justify-center mb-2 shadow-sm">
+                            <Upload className="w-8 h-8" />
+                          </div>
+                          <h4 className="text-gray-700 font-semibold text-lg">Upload your resume</h4>
+                          <p className="text-sm text-gray-500 max-w-sm mb-4">Supported formats: PDF, DOCX. Max size: 5MB.</p>
+                          
+                          <label className={`cursor-pointer bg-gradient-to-r from-red-500 to-rose-600 text-white hover:from-red-600 hover:to-rose-700 px-8 py-3 rounded-xl font-semibold transition-all shadow-md shadow-red-500/20 inline-flex flex-col items-center ${isUploadingResume ? 'opacity-50 pointer-events-none' : 'hover:-translate-y-0.5 active:translate-y-0'}`}>
+                            <span className="flex items-center gap-2">
+                              {isUploadingResume ? (
+                                <><Loader2 className="w-5 h-5 animate-spin" /> Uploading...</>
+                              ) : (
+                                <><Upload className="w-5 h-5" /> Browse Files</>
+                              )}
+                            </span>
+                            <input type="file" className="hidden" accept=".pdf,.doc,.docx" onChange={handleResumeChange} disabled={isUploadingResume} />
+                          </label>
+                        </>
+                      )}
                     </div>
                   )}
                 </div>

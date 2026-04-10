@@ -48,6 +48,52 @@ const getProfile = async (req, res) => {
   }
 };
 
+const getProfileById = async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id).select("-password");
+    
+    if (!user) {
+      return res.status(404).json({ 
+        success: false, 
+        message: "User not found" 
+      });
+    }
+    
+    res.json({
+      success: true,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        profilePic: user.profilePic,
+        coverPic: user.coverPic,
+        resume: user.resume,
+        location: user.location,
+        joined: user.joined,
+        bio: user.bio,
+        skills: user.skills,
+        social: user.social,
+        stats: user.stats,
+        experience: user.experience,
+        availability: user.availability,
+        hourlyRate: user.hourlyRate,
+        phone: user.phone,
+        isProfileComplete: user.isProfileComplete,
+        createdAt: user.createdAt,
+        updatedAt: user.updatedAt
+      }
+    });
+  } catch (error) {
+    console.error("Get profile by id error:", error);
+    res.status(500).json({ 
+      success: false, 
+      message: "Server error", 
+      error: error.message 
+    });
+  }
+};
+
 
 const updateProfile = async (req, res) => {
   try {
@@ -324,6 +370,7 @@ const updateRating = async (req, res) => {
 
 module.exports = {
   getProfile,
+  getProfileById,
   updateProfile,
   updateProfilePicture,
   updateCoverPicture,

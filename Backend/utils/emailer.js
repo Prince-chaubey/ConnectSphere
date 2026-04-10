@@ -13,7 +13,7 @@ const getTransporter = () => {
       service: "gmail",
       auth: {
         user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS.replace(/\s+/g, ""), // strip ALL spaces automatically
+        pass: process.env.EMAIL_PASS.replace(/\s+/g, "")
       },
     });
     //console.log(`Email transporter created for: ${process.env.EMAIL_USER}`);

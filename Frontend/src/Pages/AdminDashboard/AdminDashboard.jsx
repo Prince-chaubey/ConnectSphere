@@ -50,7 +50,7 @@ const ApplicationRow = ({ app, onStatusChange }) => {
   return (
     <div className="flex items-center gap-3 py-3 px-4 hover:bg-slate-50 rounded-xl transition-colors">
       {/* Avatar */}
-      <div className="shrink-0">
+      <Link to={`/profile/${applicant._id || ''}`} className="shrink-0 block hover:opacity-80 transition-opacity">
         {applicant.profilePic && !applicant.profilePic.includes("via.placeholder.com") ? (
           <img 
             src={applicant.profilePic} 
@@ -70,10 +70,12 @@ const ApplicationRow = ({ app, onStatusChange }) => {
         >
           {applicant.name?.[0]?.toUpperCase() || "?"}
         </div>
-      </div>
+      </Link>
 
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-semibold text-slate-800 truncate">{applicant.name || "Unknown"}</p>
+        <Link to={`/profile/${applicant._id || ''}`} className="hover:underline text-slate-800 block">
+          <p className="text-sm font-semibold truncate">{applicant.name || "Unknown"}</p>
+        </Link>
         <p className="text-xs text-slate-400">Role: <span className="font-medium text-slate-600">{app.roleName}</span></p>
       </div>
 
