@@ -1,61 +1,75 @@
-const { GoogleGenerativeAI } = require("@google/generative-ai");
+const axios = require("axios");
+const pdfParse = require("pdf-parse");
 
 /**
- * Analyzes a resume PDF using Gemini AI and scores it against a role.
+ * Analyzes a resume without using AI by performing keyword matching and text parsing.
+ * 
+ * @param {Object} params - Analysis parameters
+ * @param {string} params.resumeUrl - The URL to the PDF resume
+ * @param {string} params.roleName - The name of the role being applied for
+ * @param {string} params.roleDescription - The description of the role
+ * @param {string[]} params.skillsRequired - Array of skills required for the role
+ * @param {string[]} params.applicantSkills - Array of skills the applicant claims to have
+ * @returns {Promise<Object>} The analysis result including score, summary, strengths, and gaps
  */
 const analyzeResume = async ({
   resumeUrl,
   roleName,
   roleDescription,
-  skillsRequired,
-  applicantSkills,
+  skillsRequired = [],
+  applicantSkills = [],
 }) => {
-  const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-  const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+  try {
+    // 1. Fetch the resume buffer
+    const response = await axios.get(resumeUrl, {
+      responseType: "arraybuffer",
+      headers: {
+        "User-Agent": "Mozilla/5.0",
+      },
+    });
 
-  // Cloudinary raw uploads are publicly accessible — fetch directly from the stored URL
-  const response = await fetch(resumeUrl);
-  if (!response.ok) {
-    throw new Error(`Failed to fetch resume: ${response.statusText}`);
+    // 2. Extract text from PDF
+    const pdfData = await pdfParse(response.data);
+    const resumeText = pdfData.text.toLowerCase().replace(/\s+/g, " ");
+
+    // 3. Perform Keyword Matching
+    const matched = [];
+    const gaps = [];
+
+    // Prioritize searching for required skills
+    skillsRequired.forEach((skill) => {
+      if (!skill) return;
+      // Using word boundaries \b to ensure we match whole words (e.g., "AI" not inside "Main")
+      const escapedSkill = skill.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      const regex = new RegExp(`\\b${escapedSkill.toLowerCase()}\\b`, "i");
+
+      if (regex.test(resumeText)) {
+        matched.push(skill);
+      } else {
+        gaps.push(skill);
+      }
+    });
+
+    // 4. Calculate Match Score
+    const totalRequired = skillsRequired.length || 1;
+    const score = Math.round((matched.length / totalRequired) * 100);
+
+    // 5. Detect Experience (Simple Regex heuristic)
+    const expRegex = /(\d+)\+?\s*years?\s*(?:of)?\s*experience/i;
+    const expMatch = resumeText.match(expRegex);
+    const detectedExp = expMatch ? `${expMatch[1]}+ years` : "No specific duration detected";
+
+    // 6. Construct results compatible with existing UI
+    return {
+      score: score,
+      summary: `Applicant matches ${matched.length}/${totalRequired} required skills for ${roleName}. ${detectedExp !== "No specific duration detected" ? `Claimed experience: ${detectedExp}.` : "Manual review for experience suggested."}`,
+      strengths: matched,
+      gaps: gaps,
+    };
+  } catch (error) {
+    console.error("Local Resume Analysis Error:", error.message);
+    throw new Error(`Resume Analysis Failed: ${error.message}`);
   }
-  const buffer = await response.arrayBuffer();
-  const base64 = Buffer.from(buffer).toString("base64");
-
-  const prompt = `You are an expert technical recruiter performing CV shortlisting.
-
-ROLE DETAILS:
-- Role Name: ${roleName}
-- Role Description: ${roleDescription || "Not specified"}
-- Required Skills: ${skillsRequired?.length ? skillsRequired.join(", ") : "Not specified"}
-- Applicant's Profile Skills: ${applicantSkills?.length ? applicantSkills.join(", ") : "Not specified"}
-
-TASK:
-Carefully read the attached resume PDF and evaluate how well this candidate fits the role above.
-
-Respond with ONLY a valid JSON object — no markdown, no code block, no explanation — in this exact format:
-{
-  "score": <integer 0-100>,
-  "summary": "<2-3 sentence overall assessment of the candidate's fit>",
-  "strengths": ["<strength 1>", "<strength 2>", "<strength 3>"],
-  "gaps": ["<gap 1>", "<gap 2>"]
-}
-
-Score guide: 0-40 = Poor fit, 41-60 = Average, 61-80 = Good fit, 81-100 = Excellent fit`;
-
-  const result = await model.generateContent([
-    { inlineData: { mimeType: "application/pdf", data: base64 } },
-    prompt,
-  ]);
-
-  const text = result.response.text().trim();
-  const cleaned = text
-    .replace(/^```json\s*/i, "")
-    .replace(/^```\s*/i, "")
-    .replace(/```\s*$/i, "")
-    .trim();
-
-  return JSON.parse(cleaned);
 };
 
 module.exports = analyzeResume;
-
