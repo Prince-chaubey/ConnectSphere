@@ -125,7 +125,16 @@ const getProjectById = async (req, res) => {
       project: project._id,
     });
 
-    res.json({ success: true, project: { ...project.toObject(), applicantCount } });
+    let hasApplied = false;
+    if (req.userId) {
+      const existing = await Application.findOne({
+        project: project._id,
+        applicant: req.userId,
+      });
+      hasApplied = !!existing;
+    }
+
+    res.json({ success: true, project: { ...project.toObject(), applicantCount, hasApplied } });
   } catch (error) {
     console.error("Get project error:", error);
     res.status(500).json({ success: false, message: error.message });
@@ -314,6 +323,19 @@ const updateApplicationStatus = async (req, res) => {
 
     application.status = status;
     await application.save();
+
+    // If accepted, increment project and role filled counts
+    if (status === "accepted") {
+      await Project.updateOne(
+        { _id: application.project._id, "roles.roleName": application.roleName },
+        { 
+          $inc: { 
+            membersFilled: 1, 
+            "roles.$.membersFilled": 1 
+          } 
+        }
+      );
+    }
 
     // Send email notification for accepted/rejected status
     if (status === "accepted" || status === "rejected") {

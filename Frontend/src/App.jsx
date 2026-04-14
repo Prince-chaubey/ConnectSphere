@@ -4,6 +4,8 @@ import Home from "./Pages/Home/Home";
 import Register from "./Pages/Register/Register";
 import { Toaster } from "react-hot-toast";
 import Login from "./Pages/Login/Login";
+import ForgotPassword from "./Pages/ForgotPassword/ForgotPassword";
+import ResetPassword from "./Pages/ResetPassword/ResetPassword";
 import Profile from "./Pages/Profile/Profile";
 import ProtectedRoute from "./Pages/ProtectedRoute/ProtectedRoute";
 import Explore from "./Pages/Explore/Explore";
@@ -21,6 +23,8 @@ const App = () => {
         <Route path="/" element={<Home />} />
         <Route path="/register" element={<Register />} />
         <Route path="/login" element={<Login />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/explore" element={<Explore />} />
         <Route path="/projects/:id" element={<ProjectDetail />} />
 

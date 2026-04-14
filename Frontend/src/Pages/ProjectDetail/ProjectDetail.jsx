@@ -371,8 +371,14 @@ const ProjectDetail = () => {
   const fetchProject = async () => {
     try {
       setLoading(true);
-      const res = await axios.get(`${API_URL}/projects/${id}`);
-      if (res.data.success) setProject(res.data.project);
+      const token = localStorage.getItem("token");
+      const res = await axios.get(`${API_URL}/projects/${id}`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      if (res.data.success) {
+        setProject(res.data.project);
+        setHasApplied(res.data.project.hasApplied || false);
+      }
     } catch (err) {
       console.error(err);
       toast.error("Project not found");
@@ -496,15 +502,14 @@ const ProjectDetail = () => {
               </div>
 
               {/* Apply button */}
-              {project.status === "open" && slots > 0 && (
+              {project.status === "open" && slots > 0 && !hasApplied && (
                 <div className="flex flex-col sm:flex-row gap-3">
                   {isLoggedIn ? (
                     <button
                       onClick={() => setShowApply(true)}
-                      disabled={hasApplied}
-                      className="flex items-center justify-center gap-2 px-6 py-3 bg-slate-900 text-white font-bold rounded-xl hover:bg-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="flex items-center justify-center gap-2 px-6 py-3 bg-slate-900 text-white font-bold rounded-xl hover:bg-blue-600 transition-colors"
                     >
-                      {hasApplied ? <><CheckCircle2 className="w-4 h-4" /> Applied</> : <><Send className="w-4 h-4" /> Apply to Join</>}
+                      <Send className="w-4 h-4" /> Apply to Join
                     </button>
                   ) : (
                     <Link
@@ -514,6 +519,14 @@ const ProjectDetail = () => {
                       Login to Apply <ChevronRight className="w-4 h-4" />
                     </Link>
                   )}
+                </div>
+              )}
+
+              {/* Success Badge if applied */}
+              {hasApplied && (
+                <div className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-xl font-bold text-sm">
+                  <CheckCircle2 className="w-4 h-4" />
+                  Your application has been submitted
                 </div>
               )}
             </div>

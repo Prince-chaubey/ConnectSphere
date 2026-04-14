@@ -314,4 +314,56 @@ const sendApplicationStatusEmail = async ({
   }
 };
 
-module.exports = { sendApplicationConfirmation, sendCreatorNotification, sendApplicationStatusEmail };
+/**
+ * Send password reset OTP email
+ */
+const sendPasswordResetOTP = async ({ toEmail, name, otp }) => {
+  const mailOptions = {
+    from: `"ConnectSphere" <${process.env.EMAIL_USER}>`,
+    to: toEmail,
+    subject: `Reset Your Password – ConnectSphere`,
+    html: `
+      <!DOCTYPE html>
+      <html>
+      <body style="margin:0;padding:0;background:#f8fafc;font-family:'Segoe UI',Arial,sans-serif;">
+        <div style="max-width:580px;margin:40px auto;background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.07);">
+          <div style="background:linear-gradient(135deg,#2563eb,#7c3aed);padding:36px 32px;text-align:center;">
+            <h1 style="margin:0;color:#ffffff;font-size:26px;font-weight:800;">ConnectSphere</h1>
+            <p style="margin:8px 0 0;color:rgba(255,255,255,0.9);font-size:14px;">Password Reset Request</p>
+          </div>
+          <div style="padding:36px 32px;">
+            <h2 style="margin:0 0 8px;color:#0f172a;font-size:20px;font-weight:700;">Hi ${name},</h2>
+            <p style="margin:0 0 24px;color:#64748b;font-size:15px;line-height:1.6;">
+              We received a request to reset your password. Use the OTP below to proceed. This OTP is valid for 10 minutes.
+            </p>
+            <div style="background:#f1f5f9;border-radius:12px;padding:32px;text-align:center;margin-bottom:24px;">
+              <span style="font-family:monospace;font-size:36px;font-weight:800;letter-spacing:8px;color:#2563eb;">${otp}</span>
+            </div>
+            <p style="margin:0;color:#94a3b8;font-size:13px;line-height:1.6;text-align:center;">
+              If you didn't request a password reset, you can safely ignore this email.
+            </p>
+          </div>
+          <div style="background:#f8fafc;border-top:1px solid #e2e8f0;padding:20px 32px;text-align:center;">
+            <p style="margin:0;color:#94a3b8;font-size:12px;">© 2026 ConnectSphere. All rights reserved.</p>
+          </div>
+        </div>
+      </body>
+      </html>
+    `,
+  };
+
+  try {
+    const transport = getTransporter();
+    if (!transport) return;
+    await transport.sendMail(mailOptions);
+  } catch (err) {
+    console.error("Error sending OTP email:", err.message);
+  }
+};
+
+module.exports = {
+  sendApplicationConfirmation,
+  sendCreatorNotification,
+  sendApplicationStatusEmail,
+  sendPasswordResetOTP,
+};

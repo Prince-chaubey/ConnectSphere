@@ -1,6 +1,7 @@
 const express = require("express");
 const projectRouter = express.Router();
 const auth = require("../middleware/auth");
+const checkUser = require("../middleware/checkUser");
 
 const {
   createProject,
@@ -19,7 +20,7 @@ projectRouter.get("/", getAllProjects);
 projectRouter.get("/admin/stats", auth, getAdminStats);
 projectRouter.get("/my-projects", auth, getMyProjects);
 projectRouter.get("/my-applications", auth, getMyApplications);
-projectRouter.get("/:id", getProjectById);
+projectRouter.get("/:id", checkUser, getProjectById);
 
 // Protected
 projectRouter.post("/", auth, createProject);

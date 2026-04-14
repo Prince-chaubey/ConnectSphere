@@ -4,19 +4,16 @@ module.exports = (req, res, next) => {
   const authHeader = req.header("Authorization");
 
   if (!authHeader) {
-    return res.status(401).json({ message: "No token, authorization denied" });
+    return next();
   }
 
-  const token = authHeader.split(" ")[1]; 
-
+  const token = authHeader.split(" ")[1];
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
-  
-    req.userId = decoded.id;  
-
+    req.userId = decoded.id;
     next();
   } catch (error) {
-    res.status(401).json({ message: "Token is not valid" });
+    // If token is invalid, we just proceed as guest
+    next();
   }
 };
