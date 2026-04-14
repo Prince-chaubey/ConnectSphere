@@ -18,13 +18,12 @@ app.use("/uploads", express.static("uploads"));
 //Connect Database
 connectDB();
 
-
 //All APIs Point
 
 
-app.use('/api/auth',userRouter);
 app.use("/api/user",profileRouter);
 app.use("/api/projects", projectRouter);
+app.use('/api/auth',userRouter);
 
 const PORT=process.env.PORT || 8080;
 
