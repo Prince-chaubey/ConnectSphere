@@ -28,7 +28,7 @@ const applicationSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ["pending", "accepted", "rejected"],
+      enum: ["pending", "accepted", "rejected", "interview_invited", "selected"],
       default: "pending",
     },
 
@@ -38,6 +38,13 @@ const applicationSchema = new mongoose.Schema(
     aiStrengths:   { type: [String], default: [] },
     aiGaps:        { type: [String], default: [] },
     aiAnalyzedAt:  { type: Date,     default: null },
+
+    // ── Online Assessment ────────────────────────────────────────────────────────
+    assessmentToken:       { type: String,    default: null },
+    assessmentAnswers:     { type: [Number],  default: [] },   // correct answer indices (server-only)
+    assessmentScore:       { type: Number,    default: null },  // 0-100 percentage
+    assessmentSubmitted:   { type: Boolean,   default: false },
+    assessmentSubmittedAt: { type: Date,      default: null },
   },
   { timestamps: true }
 );

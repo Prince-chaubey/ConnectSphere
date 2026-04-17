@@ -365,6 +365,14 @@ const ProjectDetail = () => {
 
   const API_URL = import.meta.env.VITE_API_URL;
   const isLoggedIn = !!localStorage.getItem("token");
+  
+  let currentUserId = null;
+  try {
+    const userStr = localStorage.getItem("user");
+    if (userStr) currentUserId = JSON.parse(userStr)._id;
+  } catch (e) {}
+  
+  const isCreator = currentUserId && project?.createdBy?._id === currentUserId;
 
   useEffect(() => { fetchProject(); }, [id]);
 
@@ -502,7 +510,7 @@ const ProjectDetail = () => {
               </div>
 
               {/* Apply button */}
-              {project.status === "open" && slots > 0 && !hasApplied && (
+              {project.status === "open" && slots > 0 && !hasApplied && !isCreator && (
                 <div className="flex flex-col sm:flex-row gap-3">
                   {isLoggedIn ? (
                     <button

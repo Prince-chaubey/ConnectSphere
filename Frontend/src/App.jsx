@@ -13,12 +13,21 @@ import ProjectDetail from "./Pages/ProjectDetail/ProjectDetail";
 import CreateProject from "./Pages/CreateProject/CreateProject";
 import MyApplications from "./Pages/MyApplications/MyApplications";
 import AdminDashboard from "./Pages/AdminDashboard/AdminDashboard";
+import Assessment from "./Pages/Assessment/Assessment";
+import ManageProject from "./Pages/ManageProject/ManageProject";
 
 
 const App = () => {
   return (
     <BrowserRouter>
-      <Toaster position="top-right" />
+      <Toaster 
+        position="top-right" 
+        toastOptions={{
+          success: { icon: null },
+          error: { icon: null },
+          loading: { icon: null }
+        }} 
+      />
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/register" element={<Register />} />
@@ -34,6 +43,9 @@ const App = () => {
         <Route path="/create-project" element={<ProtectedRoute><CreateProject /></ProtectedRoute>} />
         <Route path="/my-applications" element={<ProtectedRoute><MyApplications /></ProtectedRoute>} />
         <Route path="/admin-dashboard" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
+        <Route path="/manage-project/:id" element={<ProtectedRoute><ManageProject /></ProtectedRoute>} />
+        {/* Assessment — accessible without protection (handles login internally) */}
+        <Route path="/assessment" element={<Assessment />} />
       </Routes>
     </BrowserRouter>
   );

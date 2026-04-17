@@ -9,203 +9,7 @@ import {
   BarChart3, FolderOpen, UserCheck, TrendingUp, Loader2, Shield, Sparkles
 } from "lucide-react";
 
-// ─── AI Score Badge ────────────────────────────────────────────────────────────
-const ScoreBadge = ({ score }) => {
-  const color =
-    score >= 80 ? "bg-emerald-500" :
-    score >= 60 ? "bg-blue-500" :
-    score >= 40 ? "bg-amber-500" : "bg-red-500";
-  const label =
-    score >= 80 ? "Excellent" :
-    score >= 60 ? "Good" :
-    score >= 40 ? "Average" : "Poor";
-  return (
-    <span className={`inline-flex items-center gap-1.5 text-xs font-bold px-2.5 py-1 rounded-full text-white ${color}`}>
-      {score}% · {label}
-    </span>
-  );
-};
-
-// ─── Application Row ───────────────────────────────────────────────────────────
-const ApplicationRow = ({ app, onStatusChange }) => {
-  const [updating, setUpdating]         = useState(false);
-  const [analyzing, setAnalyzing]       = useState(false);
-  const [analysis, setAnalysis]         = useState(
-    app.aiScore != null
-      ? { score: app.aiScore, summary: app.aiSummary, strengths: app.aiStrengths || [], gaps: app.aiGaps || [] }
-      : null
-  );
-  const [showAnalysis, setShowAnalysis] = useState(false);
-
-  const API_URL  = import.meta.env.VITE_API_URL;
-  const applicant = app.applicant || {};
-
-  const handleStatus = async (status) => {
-    try {
-      setUpdating(true);
-      const token = localStorage.getItem("token");
-      const res = await axios.put(
-        `${API_URL}/projects/applications/${app._id}/status`,
-        { status },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      if (res.data.success) {
-        toast.success(`Application ${status}`);
-        onStatusChange(app._id, status);
-      }
-    } catch (err) {
-      toast.error("Failed to update status");
-    } finally {
-      setUpdating(false);
-    }
-  };
-
-  const handleAnalyze = async () => {
-    if (!app.resumeUrl) return toast.error("Applicant has no resume uploaded");
-    try {
-      setAnalyzing(true);
-      const token = localStorage.getItem("token");
-      const res = await axios.post(
-        `${API_URL}/projects/applications/${app._id}/analyze`,
-        {},
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      if (res.data.success) {
-        setAnalysis(res.data.analysis);
-        setShowAnalysis(true);
-        toast.success("CV analyzed! ✨");
-      }
-    } catch (err) {
-      toast.error(err.response?.data?.message || "Failed to analyze CV");
-    } finally {
-      setAnalyzing(false);
-    }
-  };
-
-  return (
-    <div className="py-3 px-4 hover:bg-slate-50 rounded-xl transition-colors">
-      {/* Main Row */}
-      <div className="flex items-center gap-3">
-        {/* Avatar */}
-        <Link to={`/profile/${applicant._id || ''}`} className="shrink-0 block hover:opacity-80 transition-opacity">
-          {applicant.profilePic && !applicant.profilePic.includes("via.placeholder.com") ? (
-            <img
-              src={applicant.profilePic}
-              className="w-9 h-9 rounded-full object-cover border border-slate-100"
-              alt={applicant.name}
-              onError={(e) => {
-                e.target.style.display = "none";
-                e.target.nextSibling.style.display = "flex";
-              }}
-            />
-          ) : null}
-          <div
-            className="w-9 h-9 rounded-full bg-gradient-to-tr from-blue-500 to-indigo-500 items-center justify-center text-white text-sm font-bold"
-            style={{ display: applicant.profilePic && !applicant.profilePic.includes("via.placeholder.com") ? "none" : "flex" }}
-          >
-            {applicant.name?.[0]?.toUpperCase() || "?"}
-          </div>
-        </Link>
-
-        <div className="flex-1 min-w-0">
-          <Link to={`/profile/${applicant._id || ''}`} className="hover:underline text-slate-800 block">
-            <p className="text-sm font-semibold truncate">{applicant.name || "Unknown"}</p>
-          </Link>
-          <p className="text-xs text-slate-400">Role: <span className="font-medium text-slate-600">{app.roleName}</span></p>
-        </div>
-
-        {/* AI Score badge (click to toggle panel) */}
-        {analysis && (
-          <button onClick={() => setShowAnalysis((s) => !s)} className="hidden sm:block shrink-0" title="Toggle AI analysis">
-            <ScoreBadge score={analysis.score} />
-          </button>
-        )}
-
-        {/* Actions */}
-        <div className="flex items-center gap-2 shrink-0">
-          {/* Analyze CV button */}
-          <button
-            onClick={handleAnalyze}
-            disabled={analyzing}
-            title={analysis ? "Re-analyze CV" : "Analyze CV with AI"}
-            className={`flex items-center gap-1 text-[10px] font-bold px-2 py-1 rounded-lg border transition-all
-              ${analyzing
-                ? "bg-violet-50 text-violet-400 border-violet-100 cursor-not-allowed"
-                : "bg-violet-50 text-violet-600 border-violet-100 hover:bg-violet-100"
-              }`}
-          >
-            {analyzing
-              ? <><Loader2 className="w-3 h-3 animate-spin" /> Analyzing...</>
-              : <><Sparkles className="w-3 h-3" />{analysis ? "Re-analyze" : "Analyze CV"}</>
-            }
-          </button>
-
-          {app.status === "pending" ? (
-            updating ? (
-              <Loader2 className="w-4 h-4 animate-spin text-slate-400" />
-            ) : (
-              <>
-                <button onClick={() => handleStatus("accepted")} className="p-1.5 bg-emerald-50 text-emerald-600 hover:bg-emerald-100 rounded-lg transition-colors" title="Accept">
-                  <CheckCircle2 className="w-4 h-4" />
-                </button>
-                <button onClick={() => handleStatus("rejected")} className="p-1.5 bg-red-50 text-red-500 hover:bg-red-100 rounded-lg transition-colors" title="Reject">
-                  <XCircle className="w-4 h-4" />
-                </button>
-              </>
-            )
-          ) : (
-            <span className={`text-xs font-bold px-2.5 py-1 rounded-full flex items-center gap-1.5 ${app.status === "accepted" ? "bg-emerald-50 text-emerald-700" : "bg-red-50 text-red-600"}`}>
-              <span className={`w-1.5 h-1.5 rounded-full ${STATUS_DOT[app.status]}`} />
-              {app.status.charAt(0).toUpperCase() + app.status.slice(1)}
-            </span>
-          )}
-        </div>
-      </div>
-
-      {/* AI Analysis Panel */}
-      {analysis && showAnalysis && (
-        <div className="mt-3 ml-12 bg-gradient-to-br from-violet-50 to-indigo-50 border border-violet-100 rounded-xl p-4 space-y-3">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Sparkles className="w-4 h-4 text-violet-500" />
-              <span className="text-xs font-bold text-violet-700 uppercase tracking-wide">AI Analysis</span>
-            </div>
-            <ScoreBadge score={analysis.score} />
-          </div>
-
-          <p className="text-xs text-slate-600 leading-relaxed">{analysis.summary}</p>
-
-          <div className="grid grid-cols-2 gap-3">
-            {analysis.strengths?.length > 0 && (
-              <div>
-                <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-wide mb-1.5">✅ Strengths</p>
-                <ul className="space-y-1">
-                  {analysis.strengths.map((s, i) => (
-                    <li key={i} className="text-[11px] text-slate-600 flex items-start gap-1.5">
-                      <span className="text-emerald-500 mt-0.5 shrink-0">•</span>{s}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-            {analysis.gaps?.length > 0 && (
-              <div>
-                <p className="text-[10px] font-bold text-amber-600 uppercase tracking-wide mb-1.5">⚠️ Gaps</p>
-                <ul className="space-y-1">
-                  {analysis.gaps.map((g, i) => (
-                    <li key={i} className="text-[11px] text-slate-600 flex items-start gap-1.5">
-                      <span className="text-amber-500 mt-0.5 shrink-0">•</span>{g}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-    </div>
-  );
-};
+// ApplicationRow and applicant logic moved to ManageProject.jsx
 
 const TYPE_META = {
   capstone:    { label: "Capstone",    color: "bg-violet-100 text-violet-700", bar: "from-violet-500 to-purple-600", badge: "🎓" },
@@ -221,19 +25,10 @@ const STATUS_DOT = {
 };
 
 // ─── Project Card with expandable applicants ───────────────────────────────────
-const ProjectCard = ({ project: initialProject }) => {
-  const [project, setProject] = useState(initialProject);
-  const [expanded, setExpanded] = useState(false);
+const ProjectCard = ({ project }) => {
   const meta = TYPE_META[project.type] || TYPE_META.group;
 
-  const handleStatusChange = (appId, newStatus) => {
-    setProject((prev) => ({
-      ...prev,
-      applications: prev.applications.map((a) =>
-        a._id === appId ? { ...a, status: newStatus } : a
-      ),
-    }));
-  };
+  // Removed handleStatusChange since state applies globally through ManageProject page now
 
   const pending  = project.applications?.filter((a) => a.status === "pending").length || 0;
   const accepted = project.applications?.filter((a) => a.status === "accepted").length || 0;
@@ -282,30 +77,14 @@ const ProjectCard = ({ project: initialProject }) => {
           <div className={`h-full rounded-full bg-gradient-to-r ${meta.bar} transition-all duration-700`} style={{ width: `${pct}%` }} />
         </div>
 
-        {/* Expand toggle */}
-        <button
-          onClick={() => setExpanded((e) => !e)}
-          className="flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-slate-800 transition-colors"
+        {/* Manage Action */}
+        <Link
+          to={`/manage-project/${project._id}`}
+          className="flex items-center justify-center gap-1.5 text-xs font-bold text-slate-700 bg-slate-50 hover:bg-slate-100 hover:text-blue-600 border border-slate-100 transition-colors w-full py-2.5 rounded-xl"
         >
-          {expanded ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}
-          {expanded ? "Hide" : "View"} applicants
-        </button>
+          Manage Candidates <ChevronRight className="w-3.5 h-3.5" />
+        </Link>
       </div>
-
-      {/* Applicants list */}
-      {expanded && (
-        <div className="border-t border-slate-100 px-2 py-2">
-          {project.applications?.length === 0 ? (
-            <p className="text-xs text-slate-400 text-center py-4">No applicants yet.</p>
-          ) : (
-            <div className="divide-y divide-slate-50">
-              {project.applications.map((app) => (
-                <ApplicationRow key={app._id} app={app} onStatusChange={handleStatusChange} />
-              ))}
-            </div>
-          )}
-        </div>
-      )}
     </div>
   );
 };

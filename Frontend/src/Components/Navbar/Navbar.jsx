@@ -59,39 +59,39 @@ const Navbar = () => {
       : "text-slate-600 hover:text-blue-600 hover:bg-slate-50 font-medium";
 
   const getNavItems = () => {
-    const commonItems = [
-      { path: "/", label: "Home" },
-      { path: "/explore", label: "Explore" }
-    ];
+    const baseHome = { path: "/", label: "Home" };
+    const exploreItem = { path: "/explore", label: "Explore" };
 
     if (!isLoggedIn) {
-      return commonItems;
+      return [baseHome, exploreItem];
     }
 
     switch (userRole) {
       case "user":
       case "seeker": 
         return [
-          ...commonItems,
+          baseHome,
+          exploreItem,
           { path: "/my-applications", label: "My Applications" },
         ];
 
       case "creator":
         return [
-          ...commonItems,
+          baseHome,
           { path: "/create-project", label: "Post Project" },
           { path: "/admin-dashboard", label: "Dashboard" },
         ];
 
       case "admin":
         return [
-          ...commonItems,
+          baseHome,
+          exploreItem,
           { path: "/create-project", label: "Post Project" },
           { path: "/admin-dashboard", label: "Admin Panel" },
         ];
 
       default:
-        return commonItems;
+        return [baseHome, exploreItem];
     }
   };
 

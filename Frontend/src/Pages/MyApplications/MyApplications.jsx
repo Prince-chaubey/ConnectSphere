@@ -16,7 +16,7 @@ const TYPE_META = {
 
 const STATUS_META = {
   pending:  { label: "Pending",  color: "bg-amber-50 text-amber-700 border-amber-200",    icon: Clock,         dotColor: "bg-amber-400" },
-  accepted: { label: "Accepted", color: "bg-emerald-50 text-emerald-700 border-emerald-200", icon: CheckCircle2, dotColor: "bg-emerald-500" },
+  selected: { label: "selected", color: "bg-emerald-50 text-emerald-700 border-emerald-200", icon: CheckCircle2, dotColor: "bg-emerald-500" },
   rejected: { label: "Rejected", color: "bg-red-50 text-red-600 border-red-200",          icon: XCircle,       dotColor: "bg-red-400" },
 };
 
@@ -50,6 +50,8 @@ const MyApplications = () => {
       } finally {
         setLoading(false);
       }
+
+      
     };
     fetchApplications();
   }, []);
@@ -61,14 +63,14 @@ const MyApplications = () => {
   const counts = {
     all:      applications.length,
     pending:  applications.filter((a) => a.status === "pending").length,
-    accepted: applications.filter((a) => a.status === "accepted").length,
+    selected: applications.filter((a) => a.status === "selected").length,
     rejected: applications.filter((a) => a.status === "rejected").length,
   };
 
   const tabs = [
     { key: "all",      label: `All (${counts.all})` },
     { key: "pending",  label: `Pending (${counts.pending})` },
-    { key: "accepted", label: `Accepted (${counts.accepted})` },
+    { key: "selected", label: `selected (${counts.selected})` },
     { key: "rejected", label: `Rejected (${counts.rejected})` },
   ];
 
@@ -86,7 +88,7 @@ const MyApplications = () => {
               {[
                 { label: "Total", val: counts.all,      color: "bg-slate-900 text-white" },
                 { label: "Pending", val: counts.pending, color: "bg-amber-100 text-amber-700" },
-                { label: "Accepted", val: counts.accepted, color: "bg-emerald-100 text-emerald-700" },
+                { label: "selected", val: counts.selected, color: "bg-emerald-100 text-emerald-700" },
                 { label: "Rejected", val: counts.rejected, color: "bg-red-100 text-red-600" },
               ].map((s) => (
                 <div key={s.label} className={`px-4 py-2 rounded-xl flex items-center gap-2 ${s.color}`}>

@@ -145,4 +145,6 @@ Distributed under the MIT License. See `LICENSE` for more information.
 ## 📧 Contact
 Project Link: [https://github.com/Prince-chaubey/ConnectIn](https://github.com/Prince-chaubey/ConnectIn)
 
-Designed & Developed with ❤️ by Prince Chaubey.
+
++
+

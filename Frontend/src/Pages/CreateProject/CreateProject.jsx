@@ -97,7 +97,7 @@ const CreateProject = () => {
       );
 
       if (res.data.success) {
-        toast.success("Project posted! 🚀");
+        toast.success("Project posted successfully.");
         navigate(`/projects/${res.data.project._id}`);
       }
     } catch (err) {

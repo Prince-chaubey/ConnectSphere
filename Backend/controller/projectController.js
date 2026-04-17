@@ -1,11 +1,14 @@
 const Project = require("../models/projectModel");
 const Application = require("../models/applicationModel");
 const User = require("../models/userModel");
+const jwt = require("jsonwebtoken");
 const analyzeResume = require("../utils/analyzeResume");
+const generateAssessment = require("../utils/generateAssessment");
 const {
   sendApplicationConfirmation,
   sendCreatorNotification,
   sendApplicationStatusEmail,
+  sendShortlistEmail,
 } = require("../utils/emailer");
 
 // ─── Create Project (Creator only) ────────────────────────────────────────────
@@ -164,6 +167,10 @@ const applyToProject = async (req, res) => {
         .json({ success: false, message: "This project is no longer accepting applications." });
     }
 
+    if (project.createdBy._id.toString() === req.userId.toString()) {
+      return res.status(400).json({ success: false, message: "Project creators cannot apply to their own projects." });
+    }
+
     // Check role exists
     const role = project.roles.find((r) => r.roleName === roleName);
     if (!role) {
@@ -305,8 +312,11 @@ const updateApplicationStatus = async (req, res) => {
     }
 
     const application = await Application.findById(applicationId)
-      .populate("project", "title createdBy")
-      .populate("applicant", "name email");
+      .populate({
+        path: "project",
+        select: "title createdBy roles type",
+      })
+      .populate("applicant", "name email skills");
 
     if (!application) {
       return res
@@ -328,24 +338,68 @@ const updateApplicationStatus = async (req, res) => {
     if (status === "accepted") {
       await Project.updateOne(
         { _id: application.project._id, "roles.roleName": application.roleName },
-        { 
-          $inc: { 
-            membersFilled: 1, 
-            "roles.$.membersFilled": 1 
-          } 
+        {
+          $inc: {
+            membersFilled: 1,
+            "roles.$.membersFilled": 1,
+          },
         }
       );
     }
 
     // Send email notification for accepted/rejected status
-    if (status === "accepted" || status === "rejected") {
-      if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
-        sendApplicationStatusEmail({
+    if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
+      sendApplicationStatusEmail({
+        toEmail: application.applicant.email,
+        applicantName: application.applicant.name,
+        projectTitle: application.project.title,
+        roleName: application.roleName,
+        status,
+      });
+
+      // ── Shortlisting logic — only on acceptance ──────────────────────────────
+      if (status === "accepted") {
+        const role = application.project.roles.find(
+          (r) => r.roleName === application.roleName
+        );
+        const skillsRequired = role?.skillsRequired || [];
+        const applicantSkills = application.applicant?.skills || [];
+
+        // Compute skill match %
+        let skillMatch = 100; // Default to 100% if no skills are specifically required
+        if (skillsRequired.length > 0) {
+          const matched = skillsRequired.filter((req) =>
+            applicantSkills.some(
+              (s) => s.toLowerCase().trim() === req.toLowerCase().trim()
+            )
+          );
+          skillMatch = Math.round((matched.length / skillsRequired.length) * 100);
+        }
+
+        // Generate a short-lived assessment token (48 hours)
+        const assessmentToken = jwt.sign(
+          {
+            userId: application.applicant._id,
+            applicationId: application._id,
+            projectId: application.project._id,
+            roleName: application.roleName,
+            skillMatch,
+          },
+          process.env.JWT_SECRET,
+          { expiresIn: "48h" }
+        );
+
+        // Store token on application for verification
+        application.assessmentToken = assessmentToken;
+        await application.save();
+
+        sendShortlistEmail({
           toEmail: application.applicant.email,
           applicantName: application.applicant.name,
           projectTitle: application.project.title,
           roleName: application.roleName,
-          status,
+          skillMatch,
+          assessmentToken,
         });
       }
     }
@@ -357,6 +411,160 @@ const updateApplicationStatus = async (req, res) => {
     });
   } catch (error) {
     console.error("Update application status error:", error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// ─── Verify Assessment Token ───────────────────────────────────────────────────
+const verifyAssessmentToken = async (req, res) => {
+  try {
+    const { token } = req.query;
+    if (!token) {
+      return res.status(400).json({ success: false, message: "Token is required" });
+    }
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const application = await Application.findById(decoded.applicationId)
+      .populate("project", "title type roles")
+      .populate("applicant", "name email");
+
+    if (!application) {
+      return res.status(404).json({ success: false, message: "Application not found" });
+    }
+
+    if (application.status !== "accepted") {
+      return res.status(403).json({ success: false, message: "Application is not accepted" });
+    }
+
+    if (application.assessmentSubmitted) {
+      return res.status(400).json({ success: false, message: "Assessment already submitted" });
+    }
+
+    res.json({
+      success: true,
+      info: {
+        applicantName: application.applicant.name,
+        projectTitle: application.project.title,
+        roleName: decoded.roleName,
+        skillMatch: decoded.skillMatch,
+      },
+    });
+  } catch (error) {
+    if (error.name === "TokenExpiredError") {
+      return res.status(401).json({ success: false, message: "Assessment link has expired" });
+    }
+    console.error("Verify assessment token error:", error);
+    res.status(401).json({ success: false, message: "Invalid assessment token" });
+  }
+};
+
+// ─── Generate Assessment Questions (Grok AI) ───────────────────────────────────
+const generateAssessmentQuestions = async (req, res) => {
+  try {
+    const { token } = req.body;
+    if (!token) {
+      return res.status(400).json({ success: false, message: "Token is required" });
+    }
+
+    // Verify the token and check user is logged in
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+    // Ensure the logged-in user matches the token owner
+    if (decoded.userId.toString() !== req.userId) {
+      return res.status(403).json({ success: false, message: "Unauthorized: token does not belong to this user" });
+    }
+
+    const application = await Application.findById(decoded.applicationId)
+      .populate("project", "title roles");
+
+    if (!application) {
+      return res.status(404).json({ success: false, message: "Application not found" });
+    }
+
+    if (application.assessmentSubmitted) {
+      return res.status(400).json({ success: false, message: "You have already submitted this assessment" });
+    }
+
+    const role = application.project.roles.find(
+      (r) => r.roleName === application.roleName
+    );
+    const skillsRequired = role?.skillsRequired || [];
+
+    const questions = await generateAssessment({
+      roleName: application.roleName,
+      skills: skillsRequired,
+      projectTitle: application.project.title,
+    });
+
+    // Strip correct answers before sending to client
+    const sanitizedQuestions = questions.map(({ correct, ...rest }) => rest);
+
+    // Store hashed answers server-side on the application
+    application.assessmentAnswers = questions.map((q) => q.correct);
+    await application.save();
+
+    res.json({ success: true, questions: sanitizedQuestions });
+  } catch (error) {
+    if (error.name === "TokenExpiredError") {
+      return res.status(401).json({ success: false, message: "Assessment link has expired" });
+    }
+    console.error("Generate assessment error:", error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// ─── Submit Assessment ─────────────────────────────────────────────────────────
+const submitAssessment = async (req, res) => {
+  try {
+    const { token, answers } = req.body;
+    if (!token || !answers) {
+      return res.status(400).json({ success: false, message: "Token and answers are required" });
+    }
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+    if (decoded.userId.toString() !== req.userId) {
+      return res.status(403).json({ success: false, message: "Unauthorized" });
+    }
+
+    const application = await Application.findById(decoded.applicationId)
+      .populate("project", "title")
+      .populate("applicant", "name email");
+
+    if (!application) {
+      return res.status(404).json({ success: false, message: "Application not found" });
+    }
+
+    if (application.assessmentSubmitted) {
+      return res.status(400).json({ success: false, message: "Assessment already submitted" });
+    }
+
+    // Grade the answers
+    const correctAnswers = application.assessmentAnswers || [];
+    let score = 0;
+    answers.forEach((ans, i) => {
+      if (ans === correctAnswers[i]) score++;
+    });
+    const percentage = Math.round((score / correctAnswers.length) * 100);
+
+    // Persist result
+    application.assessmentSubmitted = true;
+    application.assessmentScore = percentage;
+    application.assessmentSubmittedAt = new Date();
+    await application.save();
+
+    res.json({
+      success: true,
+      score: percentage,
+      correct: score,
+      total: correctAnswers.length,
+      message: `You scored ${score}/${correctAnswers.length} (${percentage}%)`,
+    });
+  } catch (error) {
+    if (error.name === "TokenExpiredError") {
+      return res.status(401).json({ success: false, message: "Assessment time expired" });
+    }
+    console.error("Submit assessment error:", error);
     res.status(500).json({ success: false, message: error.message });
   }
 };
@@ -469,6 +677,86 @@ const getAdminStats = async (req, res) => {
   }
 };
 
+const inviteToInterview = async (req, res) => {
+  try {
+    const { applicationId } = req.params;
+    // Application is already required at the top
+    const application = await Application.findById(applicationId)
+      .populate("applicant", "name email")
+      .populate("project", "createdBy title roles");
+
+    if (!application) {
+      return res.status(404).json({ success: false, message: "Application not found" });
+    }
+
+    // Verify creator ownership
+    if (application.project.createdBy.toString() !== req.userId) {
+      return res.status(403).json({ success: false, message: "Not authorized" });
+    }
+
+    application.status = "interview_invited";
+    application.interviewInvited = true;
+    await application.save();
+
+    const { sendInterviewEmail } = require("../utils/emailer");
+    sendInterviewEmail({
+      toEmail: application.applicant.email,
+      applicantName: application.applicant.name,
+      projectTitle: application.project.title,
+      roleName: application.roleName,
+    });
+
+    res.json({ success: true, message: "Interview invitation sent successfully" });
+  } catch (error) {
+    console.error("Invite to Interview Error:", error);
+    res.status(500).json({ success: false, message: "Failed to send invitation" });
+  }
+};
+
+const selectCandidate = async (req, res) => {
+  try {
+    const { applicationId } = req.params;
+    const application = await Application.findById(applicationId)
+      .populate("applicant", "name email")
+      .populate("project", "createdBy title roles");
+
+    if (!application) {
+      return res.status(404).json({ success: false, message: "Application not found" });
+    }
+
+    if (application.project.createdBy.toString() !== req.userId) {
+      return res.status(403).json({ success: false, message: "Not authorized" });
+    }
+
+    application.status = "selected";
+    await application.save();
+
+    // Increment project membersFilled
+    await Project.findByIdAndUpdate(application.project._id, {
+      $inc: { membersFilled: 1 }
+    });
+
+    // Also increment membersFilled in the exact role
+    await Project.updateOne(
+      { _id: application.project._id, "roles.roleName": application.roleName },
+      { $inc: { "roles.$.membersFilled": 1 } }
+    );
+
+    const { sendSelectionEmail } = require("../utils/emailer");
+    sendSelectionEmail({
+      toEmail: application.applicant.email,
+      applicantName: application.applicant.name,
+      projectTitle: application.project.title,
+      roleName: application.roleName,
+    });
+
+    res.json({ success: true, message: "Candidate selected successfully" });
+  } catch (error) {
+    console.error("Select Candidate Error:", error);
+    res.status(500).json({ success: false, message: "Failed to select candidate" });
+  }
+};
+
 module.exports = {
   createProject,
   getAllProjects,
@@ -479,4 +767,9 @@ module.exports = {
   updateApplicationStatus,
   getAdminStats,
   analyzeApplication,
+  verifyAssessmentToken,
+  generateAssessmentQuestions,
+  submitAssessment,
+  inviteToInterview,
+  selectCandidate,
 };
