@@ -45,6 +45,12 @@ const applicationSchema = new mongoose.Schema(
     assessmentScore:       { type: Number,    default: null },  // 0-100 percentage
     assessmentSubmitted:   { type: Boolean,   default: false },
     assessmentSubmittedAt: { type: Date,      default: null },
+
+    // ── Video Interview ────────────────────────────────────────────────────────
+    interviewScore:        { type: Number,    default: null },  // 0-100 percentage
+    interviewSummary:      { type: String,    default: "" },
+    interviewSubmitted:    { type: Boolean,   default: false },
+    interviewSubmittedAt:  { type: Date,      default: null },
   },
   { timestamps: true }
 );

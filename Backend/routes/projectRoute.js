@@ -18,6 +18,7 @@ const {
   submitAssessment,
   inviteToInterview,
   selectCandidate,
+  submitInterview,
 } = require("../controller/projectController");
 
 // Public
@@ -35,6 +36,7 @@ projectRouter.put("/applications/:applicationId/status", auth, updateApplication
 projectRouter.post("/applications/:applicationId/analyze", auth, analyzeApplication);
 projectRouter.post("/applications/:applicationId/interview", auth, inviteToInterview);
 projectRouter.post("/applications/:applicationId/select", auth, selectCandidate);
+projectRouter.post("/applications/:applicationId/submit-interview", auth, submitInterview);
 projectRouter.post("/assessment/generate", auth, generateAssessmentQuestions);
 projectRouter.post("/assessment/submit", auth, submitAssessment);
 

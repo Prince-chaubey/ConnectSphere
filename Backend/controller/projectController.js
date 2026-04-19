@@ -704,6 +704,7 @@ const inviteToInterview = async (req, res) => {
       applicantName: application.applicant.name,
       projectTitle: application.project.title,
       roleName: application.roleName,
+      applicationId: application._id
     });
 
     res.json({ success: true, message: "Interview invitation sent successfully" });
@@ -757,6 +758,62 @@ const selectCandidate = async (req, res) => {
   }
 };
 
+const submitInterview = async (req, res) => {
+  try {
+    const { applicationId } = req.params;
+    const { transcript } = req.body;
+
+    if (!transcript) {
+      return res.status(400).json({ success: false, message: "Interview transcript is required" });
+    }
+
+    const application = await Application.findById(applicationId)
+      .populate("project", "title roles createdBy");
+
+    if (!application) {
+      return res.status(404).json({ success: false, message: "Application not found" });
+    }
+
+    // Must be the applicant
+    if (application.applicant.toString() !== req.userId) {
+      return res.status(403).json({ success: false, message: "Not authorized" });
+    }
+
+    if (application.interviewSubmitted) {
+      return res.status(400).json({ success: false, message: "Interview already submitted" });
+    }
+
+    const evaluateInterview = require("../utils/evaluateInterview");
+    
+    // Evaluate the transcript using AI
+    const evaluation = await evaluateInterview({
+      roleName: application.roleName,
+      projectTitle: application.project.title,
+      transcript
+    });
+
+    application.interviewScore = evaluation.score;
+    application.interviewSummary = evaluation.summary;
+    application.interviewSubmitted = true;
+    application.interviewSubmittedAt = new Date();
+
+    await application.save();
+
+    res.json({
+      success: true,
+      message: "Interview submitted and evaluated successfully.",
+      evaluation: {
+        score: evaluation.score,
+        summary: evaluation.summary
+      }
+    });
+
+  } catch (error) {
+    console.error("Submit Interview Error:", error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
 module.exports = {
   createProject,
   getAllProjects,
@@ -772,4 +829,5 @@ module.exports = {
   submitAssessment,
   inviteToInterview,
   selectCandidate,
+  submitInterview,
 };

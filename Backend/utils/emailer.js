@@ -480,8 +480,12 @@ const sendInterviewEmail = async ({
   toEmail,
   applicantName,
   projectTitle,
-  roleName
+  roleName,
+  applicationId
 }) => {
+  const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
+  const interviewLink = `${frontendUrl}/interview/${applicationId}`;
+
   const mailOptions = {
     from: `"ConnectSphere" <${process.env.EMAIL_USER}>`,
     to: toEmail,
@@ -493,16 +497,16 @@ const sendInterviewEmail = async ({
         <div style="max-width:580px;margin:40px auto;background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.07);">
           <div style="background:linear-gradient(135deg,#2563eb,#7c3aed);padding:36px 32px;text-align:center;">
             <h1 style="margin:0;color:#ffffff;font-size:26px;font-weight:800;">ConnectSphere</h1>
-            <p style="margin:8px 0 0;color:rgba(255,255,255,0.9);font-size:14px;">Next Steps: Final Interview</p>
+            <p style="margin:8px 0 0;color:rgba(255,255,255,0.9);font-size:14px;">Next Steps: AI Video Interview</p>
           </div>
           <div style="padding:36px 32px;">
             <h2 style="margin:0 0 8px;color:#0f172a;font-size:20px;font-weight:700;">Congratulations, ${applicantName}.</h2>
             <p style="margin:0 0 24px;color:#64748b;font-size:15px;line-height:1.6;">
-              You have successfully passed the online assessment for the <strong>${roleName}</strong> role on <strong>${projectTitle}</strong>! The project creator reviewed your outstanding results and would love to move forward with a final round online interview.
+              You have successfully passed the online assessment for the <strong>${roleName}</strong> role on <strong>${projectTitle}</strong>! The project creator reviewed your outstanding results and would love to move forward with a final round AI-evaluated video interview.
             </p>
             <p style="margin:0 0 24px;color:#64748b;font-size:15px;line-height:1.6;">
-              Please join using this demo interview link at the scheduled time:<br/><br/>
-              <a href="https://meet.google.com/demo-interview-link" style="color:#2563eb;font-weight:700;">https://meet.google.com/demo-interview-link</a>
+              Please complete your video interview using the link below. If you are not logged in, you will be asked to log in first.<br/><br/>
+              <a href="${interviewLink}" style="color:#2563eb;font-weight:700;">${interviewLink}</a>
             </p>
             <div style="text-align:center;">
               <a href="${process.env.FRONTEND_URL || 'http://localhost:5173'}/my-applications"
