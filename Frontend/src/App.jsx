@@ -15,6 +15,7 @@ import MyApplications from "./Pages/MyApplications/MyApplications";
 import AdminDashboard from "./Pages/AdminDashboard/AdminDashboard";
 import Assessment from "./Pages/Assessment/Assessment";
 import ManageProject from "./Pages/ManageProject/ManageProject";
+import Interview from "./Pages/Interview/Interview";
 
 
 const App = () => {
@@ -63,6 +64,7 @@ const App = () => {
         <Route path="/my-applications" element={<ProtectedRoute><MyApplications /></ProtectedRoute>} />
         <Route path="/admin-dashboard" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
         <Route path="/manage-project/:id" element={<ProtectedRoute><ManageProject /></ProtectedRoute>} />
+        <Route path="/interview/:applicationId" element={<ProtectedRoute><Interview /></ProtectedRoute>} />
        
         <Route path="/assessment" element={<Assessment />} />
       </Routes>

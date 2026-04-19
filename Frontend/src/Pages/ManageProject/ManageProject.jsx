@@ -171,6 +171,15 @@ const ApplicationRow = ({ app, onStatusChange }) => {
              </span>
            </div>
         )}
+
+        {app.interviewSubmitted && app.interviewScore != null && (
+           <div>
+             <p className="text-[10px] font-bold text-slate-400 mb-0.5 uppercase tracking-wider">Interview Score</p>
+             <span className={`inline-block text-[11px] font-bold px-2 py-0.5 rounded-full text-white ${app.interviewScore >= 75 ? 'bg-emerald-500' : app.interviewScore >= 50 ? 'bg-blue-500' : 'bg-red-500'}`}>
+               🎙️ {app.interviewScore}%
+             </span>
+           </div>
+        )}
       </div>
 
       {/* Actions */}
@@ -255,6 +264,12 @@ const ApplicationRow = ({ app, onStatusChange }) => {
               </div>
             )}
           </div>
+          {app.interviewSubmitted && app.interviewSummary && (
+            <div className="mt-4 pt-4 border-t border-slate-200">
+              <p className="text-[10px] font-bold text-blue-600 uppercase mb-1">🎙️ Interview AI Feedback</p>
+              <p className="text-xs text-slate-600 leading-relaxed">{app.interviewSummary}</p>
+            </div>
+          )}
         </div>
       )}
     </div>

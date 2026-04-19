@@ -16,7 +16,9 @@ const TYPE_META = {
 
 const STATUS_META = {
   pending:  { label: "Pending",  color: "bg-amber-50 text-amber-700 border-amber-200",    icon: Clock,         dotColor: "bg-amber-400" },
-  selected: { label: "selected", color: "bg-emerald-50 text-emerald-700 border-emerald-200", icon: CheckCircle2, dotColor: "bg-emerald-500" },
+  accepted: { label: "Accepted", color: "bg-blue-50 text-blue-700 border-blue-200", icon: CheckCircle2, dotColor: "bg-blue-500" },
+  interview_invited: { label: "Interview", color: "bg-indigo-50 text-indigo-700 border-indigo-200", icon: Clock, dotColor: "bg-indigo-500"},
+  selected: { label: "Selected", color: "bg-emerald-50 text-emerald-700 border-emerald-200", icon: CheckCircle2, dotColor: "bg-emerald-500" },
   rejected: { label: "Rejected", color: "bg-red-50 text-red-600 border-red-200",          icon: XCircle,       dotColor: "bg-red-400" },
 };
 
@@ -227,6 +229,13 @@ const MyApplications = () => {
                           <p className="text-xs text-slate-400 mt-2 line-clamp-1 italic">
                             &ldquo;{app.coverLetter}&rdquo;
                           </p>
+                        )}
+                        {app.interviewSubmitted && (
+                          <div className="mt-3">
+                            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 text-emerald-600 text-[11px] font-bold rounded-lg border border-emerald-100">
+                              <CheckCircle2 className="w-3.5 h-3.5" /> Interview Submitted
+                            </span>
+                          </div>
                         )}
                       </div>
 
