@@ -11,7 +11,15 @@ const projectRouter = require("./routes/projectRoute");
 
 app.use(express.urlencoded({extended:true}));
 app.use(express.json());
-app.use(cors({ origin: "*", credentials: true }));
+app.use(cors({ 
+  origin: process.env.FRONTEND_URL || true, 
+  credentials: true 
+}));
+
+// Health check endpoint for Render
+app.get('/', (req, res) => {
+    res.status(200).send('API is running');
+});
 app.use("/uploads", express.static("uploads"));
 
 
