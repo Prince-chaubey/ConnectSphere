@@ -11,6 +11,7 @@ const fixed = [
   ...lines.slice(870)
 ];
 
+
 fs.writeFileSync('controller/projectController.js', fixed.join('\n'));
 
 //console.log("File fixed!");
